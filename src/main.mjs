@@ -11,7 +11,10 @@ const api = await createApi(archive,Number(process.env.PORT ?? 4020));
 console.log(JSON.stringify({source:source.origin,api:api.origin}));
 try {
   const rows = await collect(createClient(source.origin));
-  console.log(JSON.stringify(await archive.put(rows,{source:source.origin,adapter:'current'})));
+  const written = await archive.put(rows,{source:source.origin,adapter:'current'});
+  const counts = {interpreted:0,partial:0,uninterpreted:0};
+  for (const row of rows) if (row.status in counts) counts[row.status]++;
+  console.log(JSON.stringify({...written,spectra:counts}));
 } catch(error) {console.error(error.message);}
 let stopping = false;
 const stop = async () => {if(stopping) return;stopping = true;await Promise.all([source.close(),api.close()]);};
